@@ -180,7 +180,8 @@ fi
 
 log "====== Backup beendet ======"
 
-send_telegram "💾 *AdGuard Backup*
+send_telegram "*backup_adguard.sh – Backup abgeschlossen* ✅
+━━━━━━━━━━━━━━━━━━━━
 Datei: \`${BACKUP_NAME}.tar.gz\` (${BACKUP_SIZE})
 Lokal gespeichert: ${BACKUP_COUNT} Backup(s)
 Gelöscht: ${DELETED} alte(s)${NAS_MSG}" "✅"
