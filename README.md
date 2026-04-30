@@ -36,6 +36,8 @@ pi-infra/
 ├── profiles/
 │   ├── pi-dns/
 │   │   ├── profile.sh
+│   │   ├── scripts
+
 │   │   └── docker/
 │   │       └── adguard/
 │   │           └── compose.yml
@@ -60,6 +62,8 @@ pi-infra/
 - [Profile & neues Profil anlegen](docs/profiles.md)
 - [Docker & Compose Files verwalten](docs/docker.md)
 - [Secrets & .env](docs/secrets.md)
+- [Backup & NAS](docs/backup.md)
+- [Cron Jobs](docs/cron.md)
 - [Troubleshooting](docs/troubleshooting.md)
 
 ---
