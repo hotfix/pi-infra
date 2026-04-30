@@ -48,48 +48,28 @@ for dir in \
 done
 success "Verzeichnisstruktur erstellt"
 
-# --- 4. Docker Compose Files anlegen ---
+# --- 4. Docker Compose Files aus Repo kopieren ---
 info "Docker Compose Files einrichten..."
 
-# AdGuard Home
-cat > "$DOCKER_DIR/adguard/compose.yml" << 'EOF'
-services:
-  adguard:
-    image: adguard/adguardhome
-    container_name: adguard
-    restart: unless-stopped
+# Profil-spezifische Stacks (z.B. adguard)
+for stack_dir in "$PROFILE_DIR/docker/"*/; do
+    [ -f "${stack_dir}compose.yml" ] || continue
+    stack=$(basename "$stack_dir")
+    mkdir -p "$DOCKER_DIR/$stack"
+    cp "${stack_dir}compose.yml" "$DOCKER_DIR/$stack/compose.yml"
+    chown -R "$REAL_USER:$REAL_USER" "$DOCKER_DIR/$stack"
+    success "  $stack compose.yml kopiert"
+done
 
-    ports:
-      - "53:53/tcp"
-      - "53:53/udp"
-      - "80:80"
-      - "3000:3000"
-
-    volumes:
-      - ./work:/opt/adguardhome/work
-      - ./conf:/opt/adguardhome/conf
-EOF
-chown "$REAL_USER:$REAL_USER" "$DOCKER_DIR/adguard/compose.yml"
-success "  AdGuard compose.yml erstellt"
-
-# Dockge
-cat > "$DOCKER_DIR/dockge/compose.yml" << EOF
-services:
-  dockge:
-    image: louislam/dockge:1
-    container_name: dockge
-    restart: unless-stopped
-    ports:
-      - 5001:5001
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./data:/app/data
-      - ${DOCKER_DIR}:/opt/stacks
-    environment:
-      - DOCKGE_STACKS_DIR=/opt/stacks
-EOF
-chown "$REAL_USER:$REAL_USER" "$DOCKER_DIR/dockge/compose.yml"
-success "  Dockge compose.yml erstellt"
+# Gemeinsame Stacks aus shared/docker/ (z.B. dockge)
+for stack_dir in "$SHARED_DIR/docker/"*/; do
+    [ -f "${stack_dir}compose.yml" ] || continue
+    stack=$(basename "$stack_dir")
+    mkdir -p "$DOCKER_DIR/$stack"
+    cp "${stack_dir}compose.yml" "$DOCKER_DIR/$stack/compose.yml"
+    chown -R "$REAL_USER:$REAL_USER" "$DOCKER_DIR/$stack"
+    success "  $stack compose.yml kopiert (shared)"
+done
 
 # --- 5. Container starten ---
 info "Container starten..."

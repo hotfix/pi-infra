@@ -24,25 +24,53 @@ Eigenes Profil anlegen: `profiles/MEIN_PROFIL/profile.sh` (siehe bestehende als 
 
 ```
 pi-infra/
-├── bootstrap.sh          # Einstiegspunkt
-├── .env.example          # Vorlage (sicher für Git)
+├── bootstrap.sh               # Einstiegspunkt
+├── .env.example               # Vorlage (sicher für Git)
 ├── .gitignore
+├── README.md
 ├── profiles/
 │   ├── pi-dns/
-│   │   └── profile.sh    # DNS-Pi Setup
+│   │   ├── profile.sh         # DNS-Pi Setup-Logik
+│   │   └── docker/
+│   │       └── adguard/
+│   │           └── compose.yml
 │   ├── pi-media/
-│   │   └── profile.sh    # Media-Pi Setup
+│   │   ├── profile.sh
+│   │   └── docker/
+│   │       └── jellyfin/
+│   │           └── compose.yml
 │   └── pi-home/
-│       └── profile.sh    # Home-Pi Setup
+│       ├── profile.sh
+│       └── docker/
+│           └── ...
 └── shared/
-    ├── scripts/           # Gemeinsame Scripts (alle Profile)
+    ├── scripts/               # Gemeinsame Scripts (alle Profile)
     │   ├── telegram_notify.sh
     │   ├── monitor.sh
     │   ├── health_check.sh
     │   ├── cleanup.sh
     │   ├── update.sh
     │   └── sd_health.sh
-    └── docker/            # Wiederverwendbare Compose-Snippets
+    └── docker/                # Stacks die alle Profile nutzen
+        └── dockge/
+            └── compose.yml
+```
+
+## Compose Files verwalten
+
+Alle `compose.yml` liegen versioniert im Repo – nie direkt auf dem Pi bearbeiten.
+
+Das `profile.sh` kopiert beim Setup automatisch:
+- `profiles/PROFIL/docker/STACK/compose.yml` → `~/docker/STACK/compose.yml`
+- `shared/docker/STACK/compose.yml` → `~/docker/STACK/compose.yml` (für alle Profile)
+
+Neuen Stack hinzufügen:
+```bash
+mkdir -p profiles/pi-dns/docker/mein-stack
+nano profiles/pi-dns/docker/mein-stack/compose.yml
+git add . && git commit -m "Add mein-stack" && git push
+# Auf dem Pi:
+cd ~/pi-infra && git pull && sudo bash bootstrap.sh pi-dns
 ```
 
 ## Secrets verwalten
