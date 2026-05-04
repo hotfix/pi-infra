@@ -45,6 +45,7 @@ for dir in \
     "$DOCKER_DIR/nginx-proxy-manager/data" \
     "$DOCKER_DIR/nginx-proxy-manager/letsencrypt" \
     "$DOCKER_DIR/dockge/data" \
+    "$DOCKER_DIR/homepage/config" \
     "$REAL_HOME/sync" \
     "$BACKUP_DIR" \
     "$PI_ADMIN/logs"; do
@@ -71,6 +72,40 @@ if [ "${CHOSEN_MODE:-fresh}" = "add" ] && [ -n "${ADD_STACK:-}" ]; then
     cd "$DOCKER_DIR/$ADD_STACK"
     sudo -u "$REAL_USER" docker compose up -d
     success "$ADD_STACK gestartet"
+    exit 0
+fi
+
+# Im reset-Modus alle Container stoppen, neu aufbauen – Daten bleiben
+if [ "${CHOSEN_MODE:-fresh}" = "reset" ]; then
+    info "Reset – stoppe alle Container..."
+    for stack_dir in "$PROFILE_DIR/docker/"*/; do
+        [ -f "${stack_dir}compose.yml" ] || continue
+        stack=$(basename "$stack_dir")
+        if [ -d "$DOCKER_DIR/$stack" ]; then
+            cd "$DOCKER_DIR/$stack"
+            sudo -u "$REAL_USER" docker compose down 2>/dev/null || true
+            # Compose File aus Repo aktualisieren
+            cp -r "$stack_dir". "$DOCKER_DIR/$stack/"
+            chown -R "$REAL_USER:$REAL_USER" "$DOCKER_DIR/$stack"
+            sudo -u "$REAL_USER" docker compose pull -q 2>/dev/null || true
+            sudo -u "$REAL_USER" docker compose up -d
+            success "  $stack neu gestartet (Daten erhalten)"
+        fi
+    done
+    for stack_dir in "$SHARED_DIR/docker/"*/; do
+        [ -f "${stack_dir}compose.yml" ] || continue
+        stack=$(basename "$stack_dir")
+        if [ -d "$DOCKER_DIR/$stack" ]; then
+            cd "$DOCKER_DIR/$stack"
+            sudo -u "$REAL_USER" docker compose down 2>/dev/null || true
+            cp -r "$stack_dir". "$DOCKER_DIR/$stack/"
+            chown -R "$REAL_USER:$REAL_USER" "$DOCKER_DIR/$stack"
+            sudo -u "$REAL_USER" docker compose pull -q 2>/dev/null || true
+            sudo -u "$REAL_USER" docker compose up -d
+            success "  $stack neu gestartet (Daten erhalten, shared)"
+        fi
+    done
+    success "Reset abgeschlossen – alle Daten in ~/docker/*/data sind erhalten"
     exit 0
 fi
 
@@ -109,18 +144,18 @@ for stack_dir in "$PROFILE_DIR/docker/"*/; do
     [ -f "${stack_dir}compose.yml" ] || continue
     stack=$(basename "$stack_dir")
     mkdir -p "$DOCKER_DIR/$stack"
-    cp "${stack_dir}compose.yml" "$DOCKER_DIR/$stack/compose.yml"
+    cp -r "$stack_dir". "$DOCKER_DIR/$stack/"
     chown -R "$REAL_USER:$REAL_USER" "$DOCKER_DIR/$stack"
-    success "  $stack compose.yml kopiert"
+    success "  $stack kopiert"
 done
 
 for stack_dir in "$SHARED_DIR/docker/"*/; do
     [ -f "${stack_dir}compose.yml" ] || continue
     stack=$(basename "$stack_dir")
     mkdir -p "$DOCKER_DIR/$stack"
-    cp "${stack_dir}compose.yml" "$DOCKER_DIR/$stack/compose.yml"
+    cp -r "$stack_dir". "$DOCKER_DIR/$stack/"
     chown -R "$REAL_USER:$REAL_USER" "$DOCKER_DIR/$stack"
-    success "  $stack compose.yml kopiert (shared)"
+    success "  $stack kopiert (shared)"
 done
 
 

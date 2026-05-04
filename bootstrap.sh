@@ -136,14 +136,16 @@ if [ -z "$CHOSEN_MODE" ]; then
     echo "  Wie soll das Profil eingerichtet werden?"
     echo ""
     echo "  1) Neu-Installation  – alles frisch einrichten"
-    echo "  2) Stack hinzufügen  – neuen Container auf bestehendem Pi installieren"
-    echo "  3) Aktualisieren     – Scripts + Compose Files aktualisieren, Container neu starten"
+    echo "  2) Stack hinzufügen  – neuen Container auf bestehendem Pi"
+    echo "  3) Aktualisieren     – Scripts + Images updaten, Container neu starten"
+    echo "  4) Reset             – alle Container neu aufbauen, Daten bleiben erhalten"
     echo ""
-    read -rp "  Modus wählen [1-3]: " MODE_CHOICE
+    read -rp "  Modus wählen [1-4]: " MODE_CHOICE
     case "$MODE_CHOICE" in
         1) CHOSEN_MODE="fresh" ;;
         2) CHOSEN_MODE="add" ;;
         3) CHOSEN_MODE="update" ;;
+        4) CHOSEN_MODE="reset" ;;
         *) CHOSEN_MODE="fresh" ;;
     esac
 fi
@@ -155,7 +157,6 @@ case "$CHOSEN_MODE" in
     add)
         success "Modus: Stack hinzufügen"
         echo ""
-        # Verfügbare Stacks aus Profil anzeigen
         echo "  Verfügbare Stacks im Profil '$CHOSEN_PROFILE':"
         for stack_dir in "$PROFILE_DIR/docker/"*/; do
             stack=$(basename "$stack_dir")
@@ -165,12 +166,30 @@ case "$CHOSEN_MODE" in
                 echo "    [neu]   $stack"
             fi
         done
+        # Auch shared Stacks anzeigen
+        for stack_dir in "$SHARED_DIR/docker/"*/; do
+            stack=$(basename "$stack_dir")
+            if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^${stack}$"; then
+                echo "    [läuft] $stack (shared)"
+            else
+                echo "    [neu]   $stack (shared)"
+            fi
+        done
         echo ""
         read -rp "  Welchen Stack hinzufügen? " ADD_STACK
         export ADD_STACK
         ;;
     update)
         success "Modus: Aktualisieren"
+        ;;
+    reset)
+        success "Modus: Reset – Container neu aufbauen, Daten bleiben erhalten"
+        echo ""
+        warn "Alle Container werden gestoppt und neu gestartet."
+        warn "Daten in ~/docker/*/data bleiben vollständig erhalten."
+        echo ""
+        read -rp "  Fortfahren? [j/N] " CONFIRM
+        [[ "$CONFIRM" != "j" && "$CONFIRM" != "J" ]] && error "Abgebrochen."
         ;;
     *)
         error "Unbekannter Modus: $CHOSEN_MODE"
