@@ -9,7 +9,7 @@ Getestet auf Raspberry Pi 3B mit Raspberry Pi OS Lite.
 ## Schnellstart
 
 ```bash
-sudo bash <(curl -s https://codeberg.org/DEIN_USER/pi-infra/raw/branch/main/bootstrap.sh)
+curl -s https://codeberg.org/hotfix/pi-infra/raw/branch/main/bootstrap.sh | sudo bash
 ```
 
 Das Script fragt welches Profil du willst und richtet alles automatisch ein –
@@ -36,8 +36,6 @@ pi-infra/
 ├── profiles/
 │   ├── pi-dns/
 │   │   ├── profile.sh
-│   │   ├── scripts
-
 │   │   └── docker/
 │   │       └── adguard/
 │   │           └── compose.yml
@@ -63,7 +61,8 @@ pi-infra/
 - [Docker & Compose Files verwalten](docs/docker.md)
 - [Secrets & .env](docs/secrets.md)
 - [Backup & NAS](docs/backup.md)
-- [Cron Jobs](docs/cron.md)
+- [Cron-Jobs](docs/cron.md)
+- [Windows Remote-Deploy](docs/windows-deploy.md)
 - [Troubleshooting](docs/troubleshooting.md)
 
 ---
