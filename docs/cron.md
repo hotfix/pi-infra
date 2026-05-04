@@ -16,20 +16,31 @@ crontab -l
 
 | Script | Wann genau | Cron-Ausdruck | Warum diese Zeit |
 |--------|-----------|---------------|-----------------|
-| `health_check.sh` | Alle 5 Minuten, rund um die Uhr | `*/5 * * * *` | Schnelle Reaktion bei Container-Ausfall |
+| `health-check.sh` | Alle 5 Minuten, rund um die Uhr | `*/5 * * * *` | Schnelle Reaktion bei Container-Ausfall |
 | `monitor.sh` | Alle 15 Minuten, rund um die Uhr | `*/15 * * * *` | Ressourcenüberwachung, Pi 3B schonen |
-| `backup_adguard.sh` | Täglich um 02:00 Uhr nachts | `0 2 * * *` | Wenig DNS-Last, kurze Downtime unbemerkt |
+| `backup-adguard.sh` | Täglich um 02:00 Uhr nachts | `0 2 * * *` | Wenig DNS-Last, kurze Downtime unbemerkt |
 | `cleanup.sh` | Jeden Sonntag um 04:00 Uhr nachts | `0 4 * * 0` | Wöchentlich, Pi ist idle |
-| `sd_health.sh` | Jeden Montag um 06:00 Uhr früh | `0 6 * * 1` | Wöchentlicher Gesundheitsbericht |
+| `sd-health.sh` | Jeden Montag um 06:00 Uhr früh | `0 6 * * 1` | Wöchentlicher Gesundheitsbericht |
 | `update.sh` | Am 1. jeden Monats um 03:00 Uhr nachts | `0 3 1 * *` | Monatlich, selten genug für Stabilität |
+### Profil `pi-home`
+
+| Script | Wann genau | Cron-Ausdruck | Warum diese Zeit |
+|--------|-----------|---------------|-----------------|
+| `health-check.sh` | Alle 5 Minuten, rund um die Uhr | `*/5 * * * *` | Schnelle Reaktion bei Container-Ausfall |
+| `monitor.sh` | Alle 15 Minuten, rund um die Uhr | `*/15 * * * *` | Ressourcenüberwachung |
+| `backup-home.sh` | Täglich um 02:00 Uhr nachts | `0 2 * * *` | Alle Dienste konsistent sichern |
+| `cleanup.sh` | Jeden Sonntag um 04:00 Uhr nachts | `0 4 * * 0` | Wöchentlich aufräumen |
+| `sd-health.sh` | Jeden Montag um 06:00 Uhr früh | `0 6 * * 1` | Wöchentlicher SD-Bericht |
+| `update.sh` | Am 1. jeden Monats um 03:00 Uhr nachts | `0 3 1 * *` | Monatliche Updates |
+
 
 Als Crontab-Einträge:
 ```
-*/5  * * * *  /home/pi/pi-admin/health_check.sh >> /home/pi/pi-admin/logs/health_check.log 2>&1
+*/5  * * * *  /home/pi/pi-admin/health-check.sh >> /home/pi/pi-admin/logs/health-check.log 2>&1
 */15 * * * *  /home/pi/pi-admin/monitor.sh >> /home/pi/pi-admin/logs/monitor.log 2>&1
-0    2 * * *  /home/pi/pi-admin/backup_adguard.sh >> /home/pi/pi-admin/logs/backup_adguard.log 2>&1
+0    2 * * *  /home/pi/pi-admin/backup-adguard.sh >> /home/pi/pi-admin/logs/backup-adguard.log 2>&1
 0    4 * * 0  sudo /home/pi/pi-admin/cleanup.sh >> /home/pi/pi-admin/logs/cleanup.log 2>&1
-0    6 * * 1  /home/pi/pi-admin/sd_health.sh >> /home/pi/pi-admin/logs/sd_health.log 2>&1
+0    6 * * 1  /home/pi/pi-admin/sd-health.sh >> /home/pi/pi-admin/logs/sd-health.log 2>&1
 0    3 1 * *  /home/pi/pi-admin/update.sh >> /home/pi/pi-admin/logs/update.log 2>&1
 ```
 
@@ -62,9 +73,9 @@ crontab -e
 Beispiel – Backup statt um 02:00 um 03:30 ausführen:
 ```bash
 # Vorher:
-0 2 * * *  /home/pi/pi-admin/backup_adguard.sh ...
+0 2 * * *  /home/pi/pi-admin/backup-adguard.sh ...
 # Nachher:
-30 3 * * *  /home/pi/pi-admin/backup_adguard.sh ...
+30 3 * * *  /home/pi/pi-admin/backup-adguard.sh ...
 ```
 
 ---
@@ -74,11 +85,11 @@ Beispiel – Backup statt um 02:00 um 03:30 ausführen:
 Zum Testen jeden Job direkt aufrufen:
 
 ```bash
-bash ~/pi-admin/health_check.sh
+bash ~/pi-admin/health-check.sh
 bash ~/pi-admin/monitor.sh
-bash ~/pi-admin/backup_adguard.sh
+bash ~/pi-admin/backup-adguard.sh
 sudo bash ~/pi-admin/cleanup.sh       # braucht sudo
-bash ~/pi-admin/sd_health.sh
+bash ~/pi-admin/sd-health.sh
 bash ~/pi-admin/update.sh
 ```
 
@@ -98,15 +109,15 @@ Jeder Job schreibt in eine eigene Logdatei unter `~/pi-admin/logs/`:
 ls -lht ~/pi-admin/logs/
 
 # Einzelne Logs:
-tail -30 ~/pi-admin/logs/health_check.log
+tail -30 ~/pi-admin/logs/health-check.log
 tail -30 ~/pi-admin/logs/monitor.log
-tail -30 ~/pi-admin/logs/backup_adguard.log
+tail -30 ~/pi-admin/logs/backup-adguard.log
 tail -30 ~/pi-admin/logs/cleanup.log
-tail -30 ~/pi-admin/logs/sd_health.log
+tail -30 ~/pi-admin/logs/sd-health.log
 tail -30 ~/pi-admin/logs/update.log
 
 # Live mitlesen:
-tail -f ~/pi-admin/logs/health_check.log
+tail -f ~/pi-admin/logs/health-check.log
 ```
 
 Logs werden automatisch nach `LOG_MAX_AGE_DAYS` (Standard: 60 Tage)

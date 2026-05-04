@@ -15,21 +15,23 @@ DNS-Pi mit AdGuard Home als netzwerkweitem Werbeblocker.
 | AdGuard Home | 3000 (Setup), 80/443, 53 | DNS + Werbeblocker |
 | Dockge | 5001 | Docker UI |
 
-Cron-Jobs: alle 5 min health_check, alle 15 min monitor, täglich backup,
-wöchentlich cleanup + sd_health, monatlich update.
+Cron-Jobs: alle 5 min health-check, alle 15 min monitor, täglich backup,
+wöchentlich cleanup + sd-health, monatlich update.
 
-### `pi-media`
-Media-Pi mit Jellyfin als Medienserver.
+
+### `pi-home`
+Home-Pi als zentraler Dienste-Knoten für das Heimnetz.
 
 | Stack | Port | Zweck |
 |-------|------|-------|
-| Jellyfin | 8096 | Medienserver |
+| Uptime Kuma | 3001 | Monitoring – überwacht beide Pis + AdGuard |
+| Syncthing | 8384 | Dateisync ohne Cloud |
+| Nginx Proxy Manager | 80, 443, 81 | Reverse Proxy + SSL |
 | Dockge | 5001 | Docker UI |
 
-Cron-Jobs: wie pi-dns aber monitor alle 30 min (schont RAM).
+Cron-Jobs: alle 5 min health-check, alle 15 min monitor, täglich backup-home,
+wöchentlich cleanup + sd-health, monatlich update.
 
-### `pi-home` *(Vorlage)*
-Noch nicht implementiert – als Ausgangspunkt für Home Assistant o.ä. gedacht.
 
 ---
 
@@ -89,9 +91,13 @@ Alle Profile erhalten automatisch diese Scripts unter `~/pi-admin/`:
 
 | Script | Intervall | Funktion |
 |--------|-----------|----------|
-| `telegram_notify.sh` | – | Zentrale Benachrichtigungsfunktion |
+| `telegram-notify.sh` | – | Zentrale Benachrichtigungsfunktion |
 | `monitor.sh` | alle 15 min | CPU, RAM, Temperatur, Disk |
-| `health_check.sh` | alle 5 min | Docker Container + DNS |
+| `health-check.sh` | alle 5 min | Docker Container + DNS |
 | `cleanup.sh` | So. 04:00 | Speicher & Logs bereinigen |
-| `sd_health.sh` | Mo. 06:00 | SD-Karten Gesundheit |
+| `sd-health.sh` | Mo. 06:00 | SD-Karten Gesundheit |
 | `update.sh` | 1. des Monats | Systemupdates + Docker Images |
+
+---
+
+Vollständige Cron-Übersicht mit Zeiten und Anpassungshinweisen: [docs/cron.md](cron.md)
