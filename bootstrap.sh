@@ -157,26 +157,45 @@ case "$CHOSEN_MODE" in
     add)
         success "Modus: Stack hinzufügen"
         echo ""
+
+        # Laufende Container auf dem Pi
+        RUNNING=$(docker ps -a --format '{{.Names}}' 2>/dev/null)
+
         echo "  Verfügbare Stacks im Profil '$CHOSEN_PROFILE':"
+        FOUND=0
         for stack_dir in "$PROFILE_DIR/docker/"*/; do
+            [ -f "${stack_dir}compose.yml" ] || continue
             stack=$(basename "$stack_dir")
-            if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^${stack}$"; then
+            FOUND=1
+            if echo "$RUNNING" | grep -q "^${stack}$"; then
                 echo "    [läuft] $stack"
+            elif [ -d "$REAL_HOME/docker/$stack" ]; then
+                echo "    [stop]  $stack  (Verzeichnis vorhanden, Container gestoppt)"
             else
                 echo "    [neu]   $stack"
             fi
         done
-        # Auch shared Stacks anzeigen
+
+        echo ""
+        echo "  Shared Stacks (für alle Profile):"
         for stack_dir in "$SHARED_DIR/docker/"*/; do
+            [ -f "${stack_dir}compose.yml" ] || continue
             stack=$(basename "$stack_dir")
-            if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^${stack}$"; then
-                echo "    [läuft] $stack (shared)"
+            FOUND=1
+            if echo "$RUNNING" | grep -q "^${stack}$"; then
+                echo "    [läuft] $stack"
+            elif [ -d "$REAL_HOME/docker/$stack" ]; then
+                echo "    [stop]  $stack"
             else
-                echo "    [neu]   $stack (shared)"
+                echo "    [neu]   $stack"
             fi
         done
+
+        [ "$FOUND" -eq 0 ] && error "Keine Stacks gefunden – Repo aktuell? git pull ausführen."
+
         echo ""
-        read -rp "  Welchen Stack hinzufügen? " ADD_STACK
+        read -rp "  Stack-Name eingeben: " ADD_STACK
+        [ -z "$ADD_STACK" ] && error "Kein Stack angegeben."
         export ADD_STACK
         ;;
     update)
