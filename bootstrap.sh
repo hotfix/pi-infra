@@ -62,12 +62,24 @@ fi
 # Interaktiv abfragen
 if [ -z "$REPO_URL" ]; then
     echo ""
-    info "Codeberg Repository-URL wird benötigt."
-    info "Beispiel: https://codeberg.org/hotfix/pi-infra"
+    info "Codeberg Benutzername oder vollständige URL eingeben."
+    info "  Nur Username:  hotfix"
+    info "  Volle URL:     https://codeberg.org/hotfix/pi-infra"
     echo ""
-    read -rp "  Repo-URL: " REPO_URL
-    [ -z "$REPO_URL" ] && error "Repo-URL ist pflicht."
+    read -rp "  Codeberg Username oder URL: " REPO_INPUT
+    [ -z "$REPO_INPUT" ] && error "Eingabe ist pflicht."
+
+    # Nur Username eingegeben → URL automatisch vervollständigen
+    if [[ "$REPO_INPUT" != http* ]]; then
+        REPO_URL="https://codeberg.org/${REPO_INPUT}/pi-infra"
+        info "URL vervollständigt: $REPO_URL"
+    else
+        REPO_URL="$REPO_INPUT"
+    fi
 fi
+
+# Platzhalter abfangen
+[[ "$REPO_URL" == *"DEIN_USER"* ]] && error "Bitte echten Codeberg-Username eingeben."
 
 info "Repo: $REPO_URL"
 info "Ziel: $INSTALL_DIR"
@@ -112,6 +124,60 @@ fi
 PROFILE_DIR="$INSTALL_DIR/profiles/$CHOSEN_PROFILE"
 [ -f "$PROFILE_DIR/profile.sh" ] || error "Profil nicht gefunden: $CHOSEN_PROFILE"
 success "Gewähltes Profil: $CHOSEN_PROFILE"
+
+# =============================================================================
+# MODUS wählen
+# =============================================================================
+step "Modus wählen"
+
+CHOSEN_MODE="${2:-}"
+if [ -z "$CHOSEN_MODE" ]; then
+    echo ""
+    echo "  Wie soll das Profil eingerichtet werden?"
+    echo ""
+    echo "  1) Neu-Installation  – alles frisch einrichten"
+    echo "  2) Stack hinzufügen  – neuen Container auf bestehendem Pi installieren"
+    echo "  3) Aktualisieren     – Scripts + Compose Files aktualisieren, Container neu starten"
+    echo ""
+    read -rp "  Modus wählen [1-3]: " MODE_CHOICE
+    case "$MODE_CHOICE" in
+        1) CHOSEN_MODE="fresh" ;;
+        2) CHOSEN_MODE="add" ;;
+        3) CHOSEN_MODE="update" ;;
+        *) CHOSEN_MODE="fresh" ;;
+    esac
+fi
+
+case "$CHOSEN_MODE" in
+    fresh)
+        success "Modus: Neu-Installation"
+        ;;
+    add)
+        success "Modus: Stack hinzufügen"
+        echo ""
+        # Verfügbare Stacks aus Profil anzeigen
+        echo "  Verfügbare Stacks im Profil '$CHOSEN_PROFILE':"
+        for stack_dir in "$PROFILE_DIR/docker/"*/; do
+            stack=$(basename "$stack_dir")
+            if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^${stack}$"; then
+                echo "    [läuft] $stack"
+            else
+                echo "    [neu]   $stack"
+            fi
+        done
+        echo ""
+        read -rp "  Welchen Stack hinzufügen? " ADD_STACK
+        export ADD_STACK
+        ;;
+    update)
+        success "Modus: Aktualisieren"
+        ;;
+    *)
+        error "Unbekannter Modus: $CHOSEN_MODE"
+        ;;
+esac
+
+export CHOSEN_MODE
 
 # =============================================================================
 # .ENV einrichten

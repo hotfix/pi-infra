@@ -1,0 +1,53 @@
+---
+# Homepage Services Konfiguration
+# Datei: ~/docker/homepage/config/services.yaml
+# Alle URLs anpassen auf deine tatsächlichen Pi-IP-Adressen
+
+- pi-dns:
+    - AdGuard Home:
+        href: http://PI_DNS_IP:3000
+        description: DNS-Werbeblocker
+        icon: adguard-home.svg
+        widget:
+          type: adguard
+          url: http://PI_DNS_IP:3000
+          username: admin
+          password: DEIN_ADGUARD_PASSWORT
+
+    - Dockge (pi-dns):
+        href: http://PI_DNS_IP:5001
+        description: Docker UI
+        icon: dockge.svg
+
+- pi-home:
+    - Uptime Kuma:
+        href: http://PI_HOME_IP:3001
+        description: Monitoring
+        icon: uptime-kuma.svg
+        widget:
+          type: uptimekuma
+          url: http://PI_HOME_IP:3001
+          slug: default
+
+    - Syncthing:
+        href: http://PI_HOME_IP:8384
+        description: Dateisync
+        icon: syncthing.svg
+        widget:
+          type: syncthing
+          url: http://PI_HOME_IP:8384
+
+    - Nginx Proxy Manager:
+        href: http://PI_HOME_IP:81
+        description: Reverse Proxy
+        icon: nginx-proxy-manager.svg
+
+    - Dockge (pi-home):
+        href: http://PI_HOME_IP:5001
+        description: Docker UI
+        icon: dockge.svg
+
+    - Homepage:
+        href: http://PI_HOME_IP:3000
+        description: Dieses Dashboard
+        icon: homepage.svg

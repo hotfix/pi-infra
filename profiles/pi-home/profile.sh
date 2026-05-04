@@ -54,7 +54,56 @@ done
 success "Verzeichnisstruktur erstellt"
 
 # --- 4. Compose Files aus Repo kopieren ---
-info "Docker Compose Files einrichten..."
+info "Docker Compose Files einrichten (Modus: ${CHOSEN_MODE:-fresh})..."
+
+# Im add-Modus nur den gewählten Stack installieren
+if [ "${CHOSEN_MODE:-fresh}" = "add" ] && [ -n "${ADD_STACK:-}" ]; then
+    info "Füge Stack hinzu: $ADD_STACK"
+    STACK_SRC="$PROFILE_DIR/docker/$ADD_STACK"
+    # Auch shared/docker prüfen
+    [ ! -d "$STACK_SRC" ] && STACK_SRC="$SHARED_DIR/docker/$ADD_STACK"
+    if [ ! -d "$STACK_SRC" ]; then
+        error "Stack nicht gefunden: $ADD_STACK"
+    fi
+    mkdir -p "$DOCKER_DIR/$ADD_STACK"
+    cp "$STACK_SRC/compose.yml" "$DOCKER_DIR/$ADD_STACK/compose.yml"
+    chown -R "$REAL_USER:$REAL_USER" "$DOCKER_DIR/$ADD_STACK"
+    cd "$DOCKER_DIR/$ADD_STACK"
+    sudo -u "$REAL_USER" docker compose up -d
+    success "$ADD_STACK gestartet"
+    exit 0
+fi
+
+# Im update-Modus Compose Files aktualisieren und Container neu starten
+if [ "${CHOSEN_MODE:-fresh}" = "update" ]; then
+    info "Aktualisiere Compose Files und starte Container neu..."
+    for stack_dir in "$PROFILE_DIR/docker/"*/; do
+        [ -f "${stack_dir}compose.yml" ] || continue
+        stack=$(basename "$stack_dir")
+        if [ -d "$DOCKER_DIR/$stack" ]; then
+            cp "${stack_dir}compose.yml" "$DOCKER_DIR/$stack/compose.yml"
+            chown -R "$REAL_USER:$REAL_USER" "$DOCKER_DIR/$stack"
+            cd "$DOCKER_DIR/$stack"
+            sudo -u "$REAL_USER" docker compose pull -q 2>/dev/null
+            sudo -u "$REAL_USER" docker compose up -d
+            success "  $stack aktualisiert"
+        fi
+    done
+    # Shared stacks auch aktualisieren
+    for stack_dir in "$SHARED_DIR/docker/"*/; do
+        [ -f "${stack_dir}compose.yml" ] || continue
+        stack=$(basename "$stack_dir")
+        if [ -d "$DOCKER_DIR/$stack" ]; then
+            cp "${stack_dir}compose.yml" "$DOCKER_DIR/$stack/compose.yml"
+            chown -R "$REAL_USER:$REAL_USER" "$DOCKER_DIR/$stack"
+            cd "$DOCKER_DIR/$stack"
+            sudo -u "$REAL_USER" docker compose pull -q 2>/dev/null
+            sudo -u "$REAL_USER" docker compose up -d
+            success "  $stack aktualisiert (shared)"
+        fi
+    done
+    exit 0
+fi
 
 for stack_dir in "$PROFILE_DIR/docker/"*/; do
     [ -f "${stack_dir}compose.yml" ] || continue
